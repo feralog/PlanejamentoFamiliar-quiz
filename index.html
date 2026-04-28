@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Planejamento Familiar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1a1a1a; min-height: 100vh; }
+  header { background: #1e3a5f; color: white; padding: 20px 30px; text-align: center; }
+  header h1 { font-size: 22px; margin-bottom: 4px; }
+  header p { font-size: 13px; opacity: 0.8; }
+  .quiz-container { max-width: 800px; margin: 30px auto; padding: 0 16px 60px; }
+  #startScreen { background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  #startScreen h2 { font-size: 20px; color: #1e3a5f; margin-bottom: 12px; }
+  #startScreen p { font-size: 14px; color: #555; margin-bottom: 24px; line-height: 1.6; }
+  .progress-bar-bg { background: #dde3ea; border-radius: 8px; height: 8px; margin-bottom: 8px; }
+  .progress-bar-fill { background: #2563eb; height: 8px; border-radius: 8px; transition: width 0.4s ease; }
+  .progress-label { font-size: 12px; color: #666; margin-bottom: 20px; }
+  .question-card { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 16px; }
+  .question-number { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #2563eb; letter-spacing: 1px; margin-bottom: 10px; }
+  .question-text { font-size: 15px; line-height: 1.65; color: #1a1a1a; margin-bottom: 22px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn { background: #f7f9fc; border: 2px solid #dde3ea; border-radius: 8px; padding: 12px 16px; text-align: left; font-size: 14px; cursor: pointer; transition: background 0.15s, border-color 0.15s; line-height: 1.5; }
+  .option-btn:hover:not(:disabled) { background: #e8f0fe; border-color: #2563eb; }
+  .option-btn.correct { background: #d1fae5; border-color: #16a34a; color: #166534; }
+  .option-btn.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+  .option-btn:disabled { cursor: default; }
+  .explanation { display: none; background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 0 8px 8px 0; padding: 14px 16px; margin-top: 14px; font-size: 13px; line-height: 1.6; color: #166534; }
+  .explanation.show { display: block; }
+  .btn-next { display: none; margin-top: 18px; background: #2563eb; color: white; border: none; border-radius: 8px; padding: 12px 28px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn-next:hover { background: #1d4ed8; }
+  .btn-next.show { display: inline-block; }
+  .btn-primary { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 14px 36px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: #1d4ed8; }
+  #resultScreen { display: none; background: white; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .score-circle { width: 120px; height: 120px; border-radius: 50%; background: #1e3a5f; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px; }
+  .score-circle .score-num { font-size: 32px; font-weight: 700; }
+  .score-circle .score-denom { font-size: 13px; opacity: 0.8; }
+  #resultScreen h2 { font-size: 20px; color: #1e3a5f; margin-bottom: 10px; }
+  #resultScreen p { font-size: 14px; color: #555; margin-bottom: 24px; }
+  .stats-row { display: flex; justify-content: center; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
+  .stat-box { background: #f7f9fc; border-radius: 8px; padding: 12px 20px; text-align: center; min-width: 90px; }
+  .stat-box .stat-val { font-size: 22px; font-weight: 700; }
+  .stat-box .stat-lbl { font-size: 11px; color: #888; margin-top: 2px; }
+  .stat-box.green .stat-val { color: #16a34a; }
+  .stat-box.red .stat-val { color: #dc2626; }
+  .stat-box.blue .stat-val { color: #2563eb; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Planejamento Familiar</h1>
+  <p>Obstetrícia — Saúde da Mulher</p>
+</header>
+<div class="quiz-container">
+  <div id="startScreen">
+    <h2>Quiz de Revisão</h2>
+    <p>20 questões cobrindo direitos reprodutivos, laqueadura, métodos comportamentais, métodos hormonais (gerações de progestágenos, efeitos do estrogênio), LARCs, DIU, contracepção de emergência e critérios OMS.<br><br>Responda cada questão e veja a explicação antes de avançar.</p>
+    <button class="btn-primary" onclick="startQuiz()">Começar Quiz</button>
+  </div>
+  <div id="quizArea" style="display:none;">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">Questão 0 de 20</div>
+    <div class="question-card" id="questionCard">
+      <div class="question-number" id="questionNumber"></div>
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="optionsContainer"></div>
+      <div class="explanation" id="explanation"></div>
+      <button class="btn-next" id="btnNext" onclick="nextQuestion()">Próxima questão →</button>
+    </div>
+  </div>
+  <div id="resultScreen">
+    <div class="score-circle">
+      <span class="score-num" id="scoreFinal">0</span>
+      <span class="score-denom" id="scoreDenom">de 20</span>
+    </div>
+    <h2 id="resultTitle"></h2>
+    <p id="resultMsg"></p>
+    <div class="stats-row">
+      <div class="stat-box green"><div class="stat-val" id="statCorrect">0</div><div class="stat-lbl">Acertos</div></div>
+      <div class="stat-box red"><div class="stat-val" id="statWrong">0</div><div class="stat-lbl">Erros</div></div>
+      <div class="stat-box blue"><div class="stat-val" id="statPct">0%</div><div class="stat-lbl">Aproveitamento</div></div>
+    </div>
+    <button class="btn-primary" onclick="restartQuiz()">Refazer Quiz</button>
+  </div>
+</div>
+<script>
+const rawQuestions = [
+  {
+    question: "Após as mudanças na Lei 9.263 em 2022, qual é a idade mínima para realizar laqueadura tubária sem exigência de filhos?",
+    options: [
+      "21 anos",
+      "25 anos",
+      "18 anos",
+      "30 anos"
+    ],
+    correctIndex: 0,
+    explanation: "Em 2022, a idade mínima para laqueadura foi reduzida de 25 para 21 anos. A lei também passou a permitir a esterilização em pessoas sem filhos (desde que tenham a idade mínima), dispensar a autorização do cônjuge, e permitir esterilização durante o parto desde que solicitada com 60 dias de antecedência."
+  },
+  {
+    question: "Uma parturiente que solicitou laqueadura 30 dias antes do parto. Segundo a Lei 9.263/2022, qual é a conduta correta?",
+    options: [
+      "Não realizar a laqueadura — a solicitação deve ter antecedência mínima de 60 dias",
+      "Realizar a laqueadura pois 30 dias é tempo suficiente",
+      "Realizar apenas com autorização do cônjuge neste caso",
+      "Encaminhar para comitê de ética hospitalar para decisão"
+    ],
+    correctIndex: 0,
+    explanation: "Para realização de esterilização durante o parto (parturiente), a solicitação deve ter sido feita com pelo menos 60 dias de antecedência — para garantir que a decisão foi tomada de forma deliberada e não no contexto do trabalho de parto. 30 dias não é suficiente — a laqueadura não deve ser realizada."
+  },
+  {
+    question: "Qual é a janela de sobrevivência do espermatozoide no trato genital feminino?",
+    options: [
+      "Aproximadamente 72 horas (3 dias)",
+      "Aproximadamente 24 horas (1 dia)",
+      "Aproximadamente 5 dias",
+      "Aproximadamente 12 horas"
+    ],
+    correctIndex: 0,
+    explanation: "O espermatozoide sobrevive aproximadamente 72 horas (3 dias) no trato genital feminino. O óvulo sobrevive cerca de 48 horas após a ovulação. Portanto, o período fértil engloba os 3 dias antes até os 3 dias após a ovulação — total de ~6 dias de janela fértil."
+  },
+  {
+    question: "O método de Billings (muco cervical) está contraindicado em qual situação?",
+    options: [
+      "Ciclos menstruais irregulares ou na perimenopausa",
+      "Mulheres com mais de 35 anos que não fumam",
+      "Pacientes com histórico de miomatose uterina",
+      "Uso concomitante com anticoncepcional hormonal oral"
+    ],
+    correctIndex: 0,
+    explanation: "Métodos comportamentais como Billings, Ogino-Knaus e temperatura basal não devem ser usados em ciclos irregulares, na perimenopausa, próximo à menarca, ou em ciclos <26 ou >32 dias. A irregularidade dos ciclos torna imprevisível o período fértil, comprometendo a eficácia do método."
+  },
+  {
+    question: "Qual progestágeno é considerado o de escolha nas pílulas anticoncepcionais orais combinadas (ACO) por apresentar menor risco de tromboembolismo venoso?",
+    options: [
+      "Levonorgestrel (2ª geração)",
+      "Drospirenona (3ª geração)",
+      "Desogestrel (3ª geração)",
+      "Noretisterona (1ª geração)"
+    ],
+    correctIndex: 0,
+    explanation: "O levonorgestrel (2ª geração — gonanos) é o progestágeno de escolha na associação dos ACO porque apresenta menor risco de tromboembolismo venoso comparado aos de 3ª geração (gestodeno, desogestrel, drospirenona, ciproterona). A 3ª geração tem menos efeitos androgênicos, mas maior risco tromboembólico."
+  },
+  {
+    question: "Por que os anticoncepcionais orais combinados (ACO) são contraindicados durante a amamentação?",
+    options: [
+      "O estrogênio inibe a produção de prolactina, interrompendo a lactação",
+      "O progestágeno é excretado no leite materno em concentrações tóxicas",
+      "O estrogênio aumenta o risco de trombose puerperal na lactante",
+      "A absorção oral é reduzida durante a lactação, tornando o método ineficaz"
+    ],
+    correctIndex: 0,
+    explanation: "O estrogênio inibe a hiperprodução de prolactina (que é estimulada pelas contrações e sucção), interrompendo a lactação. Por isso, ACO combinados são contraindicados em lactantes. Nesse caso, usa-se o anticoncepcional de progestágeno isolado (minipílula com desogestrel 75 µg/dia) — não inibe a lactação."
+  },
+  {
+    question: "Qual é o efeito do estrogênio (EE) nos fatores de coagulação?",
+    options: [
+      "Aumenta os fatores de coagulação, elevando o risco de tromboembolismo venoso",
+      "Reduz os fatores de coagulação, aumentando o risco de sangramento",
+      "Não tem efeito nos fatores de coagulação em doses contraceptivas",
+      "Aumenta a fibrinólise, reduzindo o risco de trombose"
+    ],
+    correctIndex: 0,
+    explanation: "O etinilestradiol (EE) aumenta os fatores de coagulação e ↑SHBG (globulina ligadora de hormônios sexuais) — resultando em maior risco de tromboembolismo venoso (TEV). Esse risco é maior nos primeiros anos de uso e é influenciado pela dose de EE. O risco de trombose é maior com EE do que com estrogênios naturais."
+  },
+  {
+    question: "Qual anticoncepcional hormonal bloqueia 100% das ovulações?",
+    options: [
+      "Implante subcutâneo de etonogestrel (Implanon)",
+      "DIU hormonal (SIU-LNG / Mirena)",
+      "Anticoncepcional oral combinado com levonorgestrel",
+      "Injetável trimestral (AMPD — Depo-Provera)"
+    ],
+    correctIndex: 0,
+    explanation: "O implante de etonogestrel (Implanon) é o único método que bloqueia TODAS as ovulações. Libera 30–40 µg/dia de etonogestrel e tem duração de 3 anos. O SIU-LNG age principalmente por ação local (não impede ovulação de forma consistente). O injetável trimestral e os ACO têm eficácia alta mas não bloqueiam 100% das ovulações."
+  },
+  {
+    question: "Qual é a principal ação contraceptiva do SIU-LNG (Mirena)?",
+    options: [
+      "Ação local no endométrio — atrofia glandular que impede a implantação, com muco cervical hostil",
+      "Inibição central da ovulação pelo bloqueio de FSH e LH",
+      "Espermicida por reação inflamatória mediada por enzimas locais",
+      "Alteração da motilidade tubária impedindo o encontro dos gametas"
+    ],
+    correctIndex: 0,
+    explanation: "O SIU-LNG age principalmente por ação local: alta concentração de levonorgestrel no endométrio → atrofia glandular (endométrio não responsivo ao estradiol) → impedimento da implantação + muco cervical espesso e hostil. NÃO impede a ovulação de forma consistente — por isso a eficácia é principalmente por ação local. O DIU de cobre é que age por espermicida inflamatório."
+  },
+  {
+    question: "Qual é a principal diferença mecanística entre o DIU de cobre e o DIU hormonal (Mirena)?",
+    options: [
+      "DIU de cobre age por espermicida inflamatório (não hormonal); Mirena age por efeito local de levonorgestrel (atrofia endometrial)",
+      "DIU de cobre libera estrogênio para inibi a ovulação; Mirena age somente por barreira mecânica",
+      "Ambos agem da mesma forma — apenas diferem na duração de eficácia",
+      "DIU de cobre inibe a ovulação; Mirena impede a fertilização por espessamento do muco"
+    ],
+    correctIndex: 0,
+    explanation: "DIU de cobre (TCu 380): age por reação inflamatória local com espermicida (enzimas — amilase, fosfatase alcalina, anidrase carbônica), fagocitose de SPZ e ambiente hostil. NÃO é hormonal. Mirena (SIU-LNG): age por levonorgestrel local → atrofia glandular do endométrio + muco cervical hostil. É hormonal mas com ação principalmente local."
+  },
+  {
+    question: "Uma paciente de 28 anos com trombose venosa profunda prévia deseja anticoncepção. Qual é a melhor opção?",
+    options: [
+      "DIU de cobre ou implante de etonogestrel (progestágeno isolado — sem estrogênio)",
+      "Anticoncepcional oral combinado com baixa dose de estrogênio",
+      "Anel vaginal com liberação de EE + etonogestrel",
+      "Injetável mensal combinado"
+    ],
+    correctIndex: 0,
+    explanation: "Trombose venosa prévia é uma contraindicação ao uso de estrogênio (categoria 4 da OMS) — todos os métodos com EE estão contraindicados. O DIU de cobre (não hormonal) e métodos de progestágeno isolado (implante, injetável trimestral AMPD, minipílula) são seguros neste contexto, pois o progestágeno não aumenta o risco tromboembólico arterial."
+  },
+  {
+    question: "Uma adolescente sexualmente ativa busca orientação contraceptiva. Qual é o método mais recomendado?",
+    options: [
+      "Dupla proteção: LARC (implante ou DIU) + preservativo para prevenir DST",
+      "Apenas preservativo masculino, pois é o mais simples para jovens",
+      "Pílula do dia seguinte como método regular pela facilidade de uso",
+      "Adesivo transdérmico semanal sem barreira adicional"
+    ],
+    correctIndex: 0,
+    explanation: "Para adolescentes, as recomendações são: LARC (implante ou DIU — alta eficácia sem depender de uso diário) + preservativo (proteção contra DST/AIDS = dupla proteção). A alta incidência de DST nessa faixa etária e a maior propensão ao esquecimento de métodos diários tornam a dupla proteção com LARC a estratégia mais segura."
+  },
+  {
+    question: "O anel vaginal anticoncepcional apresenta menor taxa de sangramento irregular (escape) que as pílulas orais de mesma dose de EE. Por quê?",
+    options: [
+      "A absorção vaginal é mais eficiente (2ª melhor absorção corporal), fornecendo níveis hormonais estáveis sem picos e quedas",
+      "O anel vaginal tem dose maior de EE que as pílulas orais equivalentes",
+      "O anel vaginal inibe a ovulação de forma mais completa que as pílulas orais",
+      "A via vaginal evita a metabolização hepática, aumentando a biodisponibilidade do progestágeno"
+    ],
+    correctIndex: 0,
+    explanation: "A absorção vaginal é a 2ª melhor absorção do organismo (atrás apenas da sublingual), fornecendo níveis hormonais estáveis sem picos e quedas como as pílulas orais. Apesar de liberar apenas 15 µg/dia de EE, o anel tem apenas 4,4% de escape — muito menor que pílulas de mesma dose (~30%). A via vaginal não passa pelo fígado, reduzindo efeitos colaterais sistêmicos."
+  },
+  {
+    question: "Qual é o prazo máximo para o uso da contracepção de emergência com levonorgestrel para máxima eficácia?",
+    options: [
+      "72 horas após a relação desprotegida",
+      "24 horas após a relação desprotegida",
+      "5 dias após a relação desprotegida",
+      "Apenas durante as primeiras 12 horas"
+    ],
+    correctIndex: 0,
+    explanation: "A pílula do dia seguinte com levonorgestrel deve ser usada em até 72 horas para máxima eficácia — sendo que quanto mais cedo, melhor. Pode ser usada até 5 dias, porém com eficácia decrescente. O DIU de cobre, por outro lado, pode ser inserido em até 5 dias com alta eficácia. Ambos são mais eficazes quanto mais precocemente usados."
+  },
+  {
+    question: "O uso incorreto da pílula do dia seguinte (levonorgestrel) pode estar associado a qual complicação?",
+    options: [
+      "Gravidez ectópica — paralisia da tuba uterina por efeito hormonal intenso",
+      "Síndrome dos ovários policísticos pela estimulação hormonal",
+      "Miomatose uterina pela exposição aguda a altas doses de progestágeno",
+      "Endometriose pela alteração do ciclo menstrual"
+    ],
+    correctIndex: 0,
+    explanation: "O uso incorreto (fora do prazo ou em dose errada) pode resultar em fertilização que não é impedida, mas a alta dose de progestágeno pode paralisar a tuba uterina, impedindo a migração do ovo fertilizado para o útero — resultando em gravidez ectópica. Por isso a pílula do dia seguinte NÃO deve ser usada como método regular."
+  },
+  {
+    question: "O injetável trimestral (AMPD — Depo-Provera) apresenta qual efeito adverso relacionado ao metabolismo ósseo?",
+    options: [
+      "Redução da densidade mineral óssea por efeito antiestrogênico",
+      "Aumento da densidade mineral óssea por estimulação de osteoblastos",
+      "Fraturas por estresse durante o período de uso",
+      "Osteoporose irreversível após 3 meses de uso"
+    ],
+    correctIndex: 0,
+    explanation: "O AMPD (acetato de medroxiprogesterona de depósito — 150 mg IM a cada 90 dias) é derivado da 17α-hidroxiprogesterona e tem efeito antiestrogênico, o que reduz a densidade mineral óssea com uso prolongado. Outros efeitos: ↑peso (~2 kg/ano nos 2 primeiros anos), amenorreia frequente e demora no retorno da fertilidade após suspensão. Benefício: melhora perfil SNC (anticonvulsivante)."
+  },
+  {
+    question: "Qual é a classificação de critério de elegibilidade da OMS para uma condição em que o uso de determinado anticoncepcional representa risco INACEITÁVEL à saúde?",
+    options: [
+      "Categoria 4 — método contraindicado (antiga contraindicação absoluta)",
+      "Categoria 3 — método não recomendado mas pode ser usado em última instância",
+      "Categoria 2 — riscos habituais menores que os benefícios",
+      "Categoria 1 — sem restrições para uso"
+    ],
+    correctIndex: 0,
+    explanation: "Categoria 4 da OMS = risco inaceitável à saúde — método está contraindicado (equivale às antigas contraindicações absolutas). Categoria 3 = riscos geralmente superam benefícios, mas pode ser usado na falta de opção. Categoria 2 = benefícios geralmente superam riscos — usar com cautela. Categoria 1 = sem restrições."
+  },
+  {
+    question: "O DIU de cobre está contraindicado em qual das seguintes situações?",
+    options: [
+      "Moléstia inflamatória pélvica (DIP) ou cervicite ativa no momento da inserção",
+      "Nuliparidade sem outros fatores de risco para infecção pélvica",
+      "Paciente com histórico de cesariana anterior",
+      "Uso concomitante de anticonvulsivantes orais"
+    ],
+    correctIndex: 0,
+    explanation: "O DIU (cobre ou hormonal) é contraindicado em: DIP ativa ou cervicite no momento da inserção (risco de disseminação da infecção), infecção puerperal, CA ginecológico aguardando tratamento, SUA sem investigação, cavidade uterina distorcida e gravidez confirmada. Nuliparidade NÃO é contraindicação absoluta — apenas requer cautela técnica na inserção."
+  },
+  {
+    question: "O Índice de Pearl mede:",
+    options: [
+      "O número de gestações por 100 mulheres em 1 ano de uso do método",
+      "A porcentagem de mulheres que mantêm o método por 12 meses",
+      "A eficácia do método em prevenir DST em relação à gravidez",
+      "O custo-benefício do método comparado ao custo de uma gestação"
+    ],
+    correctIndex: 0,
+    explanation: "O Índice de Pearl (IP) é a expressão da taxa de falha de um método contraceptivo: número de gravidezes por 100 mulheres em 1 ano de uso. Fórmula: IP = (Nº gravidezes × 12 meses × 100) / Nº meses de exposição. Quanto menor o IP, mais eficaz o método. Implante e SIU têm IP próximo de zero (<0,1)."
+  },
+  {
+    question: "Uma mulher com epilepsia em uso de anticonvulsivantes orais deseja anticoncepção hormonal. Qual problema ocorre com a pílula oral?",
+    options: [
+      "Os anticonvulsivantes reduzem a meia-vida da pílula para 3 horas, diminuindo drasticamente sua eficácia",
+      "A pílula aumenta os níveis séricos do anticonvulsivante, causando toxicidade",
+      "Os anticonvulsivantes bloqueiam a absorção intestinal do progestágeno",
+      "A combinação aumenta o risco de trombose em 10 vezes comparado ao uso isolado"
+    ],
+    correctIndex: 0,
+    explanation: "Anticonvulsivantes orais (como carbamazepina, fenitoína, fenobarbital) são indutores enzimáticos do citocromo P450 hepático — reduzem a meia-vida da pílula oral para cerca de 3 horas, comprometendo gravemente a eficácia contraceptiva. Nesse caso, métodos não orais (injetável trimestral AMPD, implante, DIU) ou de alta dose são preferidos, pois não passam pelo metabolismo hepático de primeira passagem ou são menos afetados."
+  }
+];
+
+function shuffleQuestion(q) {
+  const correctText = q.options[q.correctIndex];
+  const shuffled = [...q.options];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return { ...q, options: shuffled, correctIndex: shuffled.indexOf(correctText) };
+}
+
+let questions = [], current = 0, score = 0;
+
+function startQuiz() {
+  questions = rawQuestions.map(shuffleQuestion).sort(() => Math.random() - 0.5);
+  current = 0; score = 0;
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current], total = questions.length;
+  document.getElementById('progressBar').style.width = ((current / total) * 100) + '%';
+  document.getElementById('progressLabel').textContent = `Questão ${current + 1} de ${total}`;
+  document.getElementById('questionNumber').textContent = `Questão ${current + 1}`;
+  document.getElementById('questionText').textContent = q.question;
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn'; btn.textContent = opt;
+    btn.onclick = () => selectAnswer(idx);
+    container.appendChild(btn);
+  });
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('explanation').textContent = '';
+  document.getElementById('btnNext').className = 'btn-next';
+}
+
+function selectAnswer(idx) {
+  const q = questions[current];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  if (idx === q.correctIndex) { btns[idx].classList.add('correct'); score++; }
+  else { btns[idx].classList.add('wrong'); btns[q.correctIndex].classList.add('correct'); }
+  const exp = document.getElementById('explanation');
+  exp.textContent = q.explanation; exp.className = 'explanation show';
+  document.getElementById('btnNext').className = 'btn-next show';
+  document.getElementById('btnNext').textContent = current + 1 < questions.length ? 'Próxima questão →' : 'Ver resultado';
+}
+
+function nextQuestion() {
+  current++;
+  if (current < questions.length) showQuestion(); else showResult();
+}
+
+function showResult() {
+  document.getElementById('quizArea').style.display = 'none';
+  const rs = document.getElementById('resultScreen'); rs.style.display = 'block';
+  const total = questions.length, pct = Math.round((score / total) * 100);
+  document.getElementById('scoreFinal').textContent = score;
+  document.getElementById('scoreDenom').textContent = `de ${total}`;
+  document.getElementById('statCorrect').textContent = score;
+  document.getElementById('statWrong').textContent = total - score;
+  document.getElementById('statPct').textContent = pct + '%';
+  let title, msg;
+  if (pct >= 80) { title = 'Excelente!'; msg = 'Ótimo domínio do conteúdo de Planejamento Familiar. Continue assim!'; }
+  else if (pct >= 60) { title = 'Bom resultado!'; msg = 'Você está no caminho certo. Revise os pontos errados no relatório.'; }
+  else { title = 'Continue estudando!'; msg = 'Revise o relatório de Planejamento Familiar com atenção antes de refazer o quiz.'; }
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultMsg').textContent = msg;
+}
+
+function restartQuiz() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'block';
+}
+</script>
+</body>
+</html>
